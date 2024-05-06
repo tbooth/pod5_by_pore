@@ -3,24 +3,21 @@
    Useful for duplex calling.
 """
 from collections import defaultdict
-from functools import partial
 import json
 
-INPUT_DIR  = config.get('input_dir', "pod5")
-WORK_DIR   = config.get('work_dir',   INPUT_DIR + ".tmp")
-OUTPUT_DIR = config.get('output_dir', INPUT_DIR + ".out")
+INPUT_DIR  = config.get('input', "input")
 
-# For testing:
-INPUT_DIR  = "/lustre-gseg/promethion/prom_runs/2023/20231107_MIN2_26171SS/26171SS0001L02/20231108_1411_MN32284_AOZ898_35873099/pod5_pass"
-WORK_DIR   = "tmp"
-OUTPUT_DIR = "out"
+# Utility functions
+from common_functions import n_sorted, get_common_prefix
 
 def list_pod5_channels(wc=None):
     """List all the .pod5.channels files (ie. one per pod5)
     """
     all_pod5 = glob_wildcards(INPUT_DIR + "/{p5}.pod5")
 
-    return [ f"{WORK_DIR}/{p5}.pod5.channels" for p5 in all_pod5.p5 ]
+    assert all_pod5.p5, f"No .pod5 files seen in {INPUT_DIR}/"
+
+    return [ f"results/tmp/{p5}.pod5.channels" for p5 in all_pod5.p5 ]
 
 def load_channels_in_use():
     """Loads channels_in_use.json, if it's available.
@@ -28,27 +25,23 @@ def load_channels_in_use():
     with open(checkpoints.get_channels_in_use.get().output[0]) as jfh:
         return json.load(jfh)
 
-def n_sorted():
-    key_regex = re.compile(r"(?<=[._])\d+(?=[._])")
-    def key_func(filename):
-        return re.sub(key_regex, lambda d: d.group().rjust(8,'0'), filename)
-    return partial(sorted, key=key_func)
-n_sorted = n_sorted()
-
 rule main:
-    input: WORK_DIR + "/channels_in_use.json"
+    input: "results/tmp/all_channels_done.touch"
 
-localrules: get_channels_in_use
+localrules: get_channels_in_use, output_for_all_channels
+
+wildcard_constraints:
+    channel = r"\d+",
 
 rule get_channels_in_pod:
-    output: WORK_DIR + "/{foo}.pod5.channels"
+    output: "results/tmp/{foo}.pod5.channels"
     input:  INPUT_DIR + "/{foo}.pod5"
     conda:  "envs/pod5.yaml"
     shell:
         "pod5 view -H {input} -i read_id,channel > {output}"
 
 checkpoint get_channels_in_use:
-    output: WORK_DIR +  "/channels_in_use.json"
+    output: "results/tmp/channels_in_use.json"
     input:  list_pod5_channels
     run:
         # "cut -d, -f 1 {input} | sort -u > {output}"
@@ -75,15 +68,15 @@ def i_pod5_for_channel(wc):
     ciu = load_channels_in_use()
 
     return dict( pod5 = [ f"{INPUT_DIR}/{f}" for f in ciu[channel] ],
-                 chan = [ f"{WORK_DIR}/{f}.channels" for f in ciu[channel] ] )
+                 chan = [ f"results/tmp/{f}.channels" for f in ciu[channel] ] )
 
 # FIXME - this could blow the command line limit if there are too many pod5 files,
 # so an alternative could be to make a load of symlinks (in tmpfs) then use the
 # recursive mode. Icky.
 rule pod5_for_channel:
     output:
-        pod5 = OUTPUT_DIR + "/channel_{channel}.pod5",
-        idlist = WORK_DIR + "/channel_{channel}.idlist"
+        pod5 =   "results/{pref}channel_{channel}.pod5",
+        idlist = "results/tmp/{pref}channel_{channel}.idlist"
     input:
         unpack(i_pod5_for_channel)
     params:
@@ -95,12 +88,18 @@ rule pod5_for_channel:
 
 def i_output_for_all_channels(wc=None):
     """Reads the list of all the channels for which there are records in any POD5.
-       Returns a list of POD5 files to make in OUTPUT_DIR.
+       Returns a list of POD5 files to make in ./results
     """
     ciu = load_channels_in_use()
 
-    # TODO - add common prefix as per Hesiod 3.2.1
-    return [ f"{OUTPUT_DIR}/channel_{c}.pod5" for c in ciu ]
+    # Keep the common prefix from the original POD5 filenames
+    common_prefix = get_common_prefix( list_pod5_channels(),
+                                       base_only= True,
+                                       extn = r"_\d+\.pod5\.channels")
+    pref = f"{common_prefix}_" if common_prefix else ""
+
+    return [ f"results/{pref}channel_{c}.pod5" for c in ciu ]
 
 rule output_for_all_channels:
-    input: i_output_for_all_channels
+    output: touch("results/tmp/all_channels_done.touch")
+    input:  i_output_for_all_channels
