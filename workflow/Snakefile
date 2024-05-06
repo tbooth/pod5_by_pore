@@ -1,0 +1,86 @@
+# vim: ft=python
+"""Snakefile to re-sort POD files by channel.
+   Useful for duplex calling.
+"""
+from collections import defaultdict
+import json
+
+INPUT_DIR  = config.get('input_dir', "pod5")
+WORK_DIR   = config.get('work_dir',   INPUT_DIR + ".tmp")
+OUTPUT_DIR = config.get('output_dir', INPUT_DIR + ".out")
+
+# For testing:
+INPUT_DIR  = "/lustre-gseg/promethion/prom_runs/2023/20231107_MIN2_26171SS/26171SS0001L02/20231108_1411_MN32284_AOZ898_35873099/pod5_pass"
+WORK_DIR   = "tmp"
+OUTPUT_DIR = "out"
+
+def list_pod5_channels(wc=None):
+    """List all the .pod5.channels files (ie. one per pod5)
+    """
+    all_pod5 = glob_wildcards(INPUT_DIR + "/{p5}.pod5")
+
+    return [ f"{WORK_DIR}/{p5}.pod5.channels" for p5 in all_pod5.p5 ]
+
+def get_channels_in_use():
+    """Loads channels_in_use.json, if it's available.
+    """
+    with open(checkpoints.get_channels_in_use.get().output) as jfh:
+        return json.load(jfh)
+
+rule main:
+    input: "channels_in_use.json"
+
+localrules: get_channels_in_use
+
+rule get_channels_in_pod:
+    output: WORK_DIR + "/{foo}.pod5.channels"
+    input:  INPUT_DIR + "/{foo}.pod5"
+    conda:  "envs/pod5.yaml"
+    shell:
+        "pod5 view -H {input} -i read_id,channel > {output}"
+
+checkpoint get_channels_in_use:
+    output: WORK_DIR +  "/channels_in_use.json"
+    input:  list_pod5_channels
+    run:
+        # "cut -d, -f 1 {input} | sort -u > {output}"
+        # Save channel -> pod5_files dict as json
+        res = defaultdict(set)
+        for f in input:
+            f_base = re.match(r"/(\w+\.pod5)\.channels$", f).group(1)
+            with open(f) as fh:
+                for read_id, channel in (l.split() for l in fh):
+                    res[channel].add(f_base)
+
+        # Sets to lists
+        with open(str(output)) as ofh:
+            json.dump( {k: sorted(v) for k, v in res.items()},
+                       fp = ofh,
+                       sort_keys = True )
+
+def i_pod5_for_channel(wc):
+    """See which pod5 files have reads on a given channel, to save us scanning
+       every file every time.
+    """
+    channel = wc.channel
+    ciu = get_channels_in_use()
+
+    return [ f"{INPUT_DIR}/{f}" for f in ciu[channel] ]
+
+rule pod5_for_channel:
+    output: "channel_{channel}.pod5"
+    input:  i_pod5_for_channel
+    run:
+        pass
+
+def i_output_for_all_channels(wc=None):
+    """Reads the list of all the channels for which there are records in any POD5.
+       Returns a list of POD5 files to make in OUTPUT_DIR.
+    """
+    ciu = get_channels_in_use()
+
+    # TODO - add common prefix as per Hesiod 3.2.1
+    return [ f"{OUTPUT_DIR}/channel_{c}.pod" for c in ciu ]
+
+rule output_for_all_channels:
+    input: i_output_for_all_channels
