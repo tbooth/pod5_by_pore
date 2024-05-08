@@ -5,7 +5,8 @@
 from collections import defaultdict
 import json
 
-INPUT_DIR  = config.get('input', "input")
+INPUT_DIR     = config.get('input', "input")
+PORES_PER_POD = int(config.get('ppp', "50"))
 
 # Utility functions
 from common_functions import n_sorted, get_common_prefix
@@ -31,7 +32,7 @@ rule main:
 localrules: get_channels_in_use, output_for_all_channels
 
 wildcard_constraints:
-    channel = r"\d+",
+    channel = r"\d+(-\d+)?",
 
 rule get_channels_in_pod:
     output: "results/tmp/{foo}.pod5.channels"
@@ -64,11 +65,17 @@ def i_pod5_for_channel(wc):
     """See which pod5 files have reads on a given channel, to save us scanning
        every file every time.
     """
-    channel = wc.channel
     ciu = load_channels_in_use()
 
-    return dict( pod5 = [ f"{INPUT_DIR}/{f}" for f in ciu[channel] ],
-                 chan = [ f"results/tmp/{f}.channels" for f in ciu[channel] ] )
+    if '-' in wc.channel:
+        # Multiple channels
+        range(*map(int, wc.channel.split("-")))
+    else:
+        channels = [wc.channel]
+    all_vals = [ v for c in channels for f in ciu.get(channel,()) ]
+
+    return dict( pod5 = sorted(set( f"{INPUT_DIR}/{f}" for f in all_vals )),
+                 chan = sorted(set( f"results/tmp/{f}.channels" for f in all_vals )) )
 
 # FIXME - this could blow the command line limit if there are too many pod5 files,
 # so an alternative could be to make a load of symlinks (in tmpfs) then use the
