@@ -75,3 +75,15 @@ Try: /lustre-gseg/promethion/prom_runs/2023/20231107_MIN2_26171SS/26171SS0001L02
 4) Then worry about Hesiod
 
 Coolio.
+
+--
+
+OK this works but it produces a load of files. This should come as no surprise since there are 4000
+pores on a Promethion flowcell. So we need to batch up some channels.
+
+My idea:
+I realise I can do this with minimal messing with the Snakefile.
+When making the .channels files, convert each channel to a range.
+So if we see channel 123 and the batch size is 50 this should be converted
+to 100-150. Add this as a third column in the .batches files. Then I think everything
+else just works.
