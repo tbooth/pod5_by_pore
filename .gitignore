@@ -1,0 +1,8 @@
+.snakemake/
+__pycache__/
+slurm_output/
+trash/
+
+/input
+/*_input
+/results
