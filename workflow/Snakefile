@@ -33,7 +33,8 @@ rule main:
 localrules: get_channels_in_use, output_for_all_channels, batched_channels_in_pod
 
 wildcard_constraints:
-    channel = r"\d+(-\d+)?",
+    channel = r"\d+(-\d+)?",  # Channel may be single or a range
+    pref    = r"[^/]*",       # Prefix may be empty
 
 rule get_channels_in_pod:
     output: "results/tmp/{foo}.pod5.channels"
@@ -115,8 +116,8 @@ def i_output_for_all_channels(wc=None):
 
     # Keep the common prefix from the original POD5 filenames
     common_prefix = get_common_prefix( list_pod5_channels(),
-                                       base_only= True,
-                                       extn = r"_\d+\.pod5\.b?channels")
+                                       base_only = True,
+                                       extn = r"_\d+\.pod5\.b?channels" )
     pref = f"{common_prefix}_" if common_prefix else ""
 
     return [ f"results/{pref}channel_{c}.pod5" for c in ciu ]

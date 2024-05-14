@@ -1,0 +1,5 @@
+These toy examples were split out from the sample file provided here:
+
+https://github.com/nanoporetech/pod5-file-format/blob/master/test_data/multi_fast5_zip_v3.pod5
+
+That codebase is released under the Mozilla Public License.
