@@ -103,6 +103,7 @@ rule pod5_for_channel:
         unpack(i_pod5_for_channel)
     params:
         awk_filter = '($2=="{channel}"){{print$1}}'
+    conda:  "envs/pod5.yaml"
     shell:
        r"""awk {params.awk_filter:q} {input.chan} > {log.idlist}
            pod5 filter -o {output.pod5} -i {log.idlist} {input.pod5}
