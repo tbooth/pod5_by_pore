@@ -1,0 +1,33 @@
+digraph snakemake_dag {
+    graph[bgcolor=white, margin=0];
+    node[shape=box, style=rounded, fontname=sans,                 fontsize=10, penwidth=2];
+    edge[penwidth=2, color=grey];
+	0[label = "main", color = "0.11 0.6 0.85", style="rounded"];
+	1[label = "batched_channels_in_pod\nfoo: results/tmp/test_1", color = "0.56 0.6 0.85", style="rounded"];
+	2[label = "get_channels_in_pod\nfoo: test_1", color = "0.22 0.6 0.85", style="rounded"];
+	3[label = "batched_channels_in_pod\nfoo: results/tmp/test_2", color = "0.56 0.6 0.85", style="rounded"];
+	4[label = "get_channels_in_pod\nfoo: test_2", color = "0.22 0.6 0.85", style="rounded"];
+	5[label = "batched_channels_in_pod\nfoo: results/tmp/test_3", color = "0.56 0.6 0.85", style="rounded"];
+	6[label = "get_channels_in_pod\nfoo: test_3", color = "0.22 0.6 0.85", style="rounded"];
+	7[label = "batched_channels_in_pod\nfoo: results/tmp/test_4", color = "0.56 0.6 0.85", style="rounded"];
+	8[label = "get_channels_in_pod\nfoo: test_4", color = "0.22 0.6 0.85", style="rounded"];
+	9[label = "output_for_all_channels", color = "0.00 0.6 0.85", style="rounded"];
+	10[label = "pod5_for_channel\nchannel: 1-100\npref: test_", color = "0.44 0.6 0.85", style="rounded"];
+	11[label = "pod5_for_channel\nchannel: 101-200\npref: test_", color = "0.44 0.6 0.85", style="rounded"];
+	12[label = "pod5_for_channel\nchannel: 401-500\npref: test_", color = "0.44 0.6 0.85", style="rounded"];
+	9 -> 0
+	2 -> 1
+	4 -> 3
+	6 -> 5
+	8 -> 7
+	10 -> 9
+	11 -> 9
+	12 -> 9
+	3 -> 10
+	7 -> 10
+	1 -> 11
+	5 -> 11
+	3 -> 12
+	5 -> 12
+	7 -> 12
+}            
