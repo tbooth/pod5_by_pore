@@ -12,7 +12,7 @@ be in the same POD5 file. Partitioning the files by pore (ie. by channel) guaran
 pairs will be together in a file, and so individual POD5 files, or batches thereof, may be
 meaningfully processed with "dorado duplex".
 
-For archiving of POD5 files, formatting by partition may be useful. This workflow does the
+For archiving of POD5 files, formatting by partition may therefor be useful. This workflow does the
 re-partitioning efficiently with a configurable batch size.
 
 ## Configuration
@@ -35,8 +35,8 @@ under results/tmp which may be discarded once the workflow is complete.
 ## Dependencies
 
 The workflow needs the **pod5** tool which may be installed using the supplied Conda environment
-definition. Note that there is no conda package for this at present so it needs to be installed
-via pip. Modern Conda installations should handle this automatically.
+definition. Note that there is no conda package for this at present so it will actually be
+installed via pip. Modern Conda installations should handle this automatically.
 
 ## Cluster execution
 
