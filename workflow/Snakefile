@@ -37,14 +37,14 @@ wildcard_constraints:
     pref    = r"[^/]*",       # Prefix may be empty
 
 rule get_channels_in_pod:
-    output: "results/tmp/{foo}.pod5.channels"
+    output: temporary("results/tmp/{foo}.pod5.channels")
     input:  INPUT_DIR + "/{foo}.pod5"
     conda:  "envs/pod5.yaml"
     shell:
         "pod5 view -H {input} -i read_id,channel > {output}"
 
 rule batched_channels_in_pod:
-    output: "{foo}.pod5.bchannels"
+    output: temporary("{foo}.pod5.bchannels")
     input:  "{foo}.pod5.channels"
     run:
         with open(str(output), "x") as ofh:
@@ -97,17 +97,17 @@ def i_pod5_for_channel(wc):
 # Or filter in batches and merge. Which is also icky.
 rule pod5_for_channel:
     output:
-        pod5 =   "results/{pref}channel_{channel}.pod5"
-    log:
-        idlist = "results/tmp/{pref}channel_{channel}.idlist"
+        pod5 =   "results/{pref}channel_{channel}.pod5",
+        idlist = temporary("results/tmp/{pref}channel_{channel}.idlist"),
+    log: "results/tmp/{pref}channel_{channel}.pod5-filter.log"
     input:
         unpack(i_pod5_for_channel)
     params:
         awk_filter = '($2=="{channel}"){{print$1}}'
     conda:  "envs/pod5.yaml"
     shell:
-       r"""awk {params.awk_filter:q} {input.chan} > {log.idlist}
-           pod5 filter -o {output.pod5} -i {log.idlist} {input.pod5}
+       r"""awk {params.awk_filter:q} {input.chan} > {output.idlist}
+           pod5 filter -o {output.pod5} -i {output.idlist} {input.pod5} >& {log}
         """
 
 def i_output_for_all_channels(wc=None):
