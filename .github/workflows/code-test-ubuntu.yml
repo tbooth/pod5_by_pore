@@ -15,12 +15,9 @@ on:
 jobs:
   auto_test:
 
-    strategy:
-      fail-fast: true
-      matrix:
-        os:
-          - ubuntu-latest
-          - macos-latest
+    runs-on:
+        - ubuntu-latest
+        - macos-latest
 
     defaults:
       run:
