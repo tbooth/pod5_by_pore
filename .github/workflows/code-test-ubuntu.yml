@@ -32,7 +32,6 @@ jobs:
         conda-solver: libmamba
         channels: conda-forge,bioconda
         channel-priority: strict
-        environment-file: episodes/files/conda_env.yaml
 
     - name: Install latest Snakemake and confirm version
       run: |
