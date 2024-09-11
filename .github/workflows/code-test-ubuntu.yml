@@ -35,14 +35,18 @@ jobs:
 
     - name: Install latest Snakemake and confirm version
       run: |
+        conda config --remove channels default || true
+        conda config --env --remove channels default || true
         conda install snakemake
         echo ---
         which snakemake
         snakemake --version
 
+    # If we generate the DAG it should match the one in the repo
     - name: Export the DAG as dag.dot
       run: |
-        snakemake --configfile tests/integration.yaml --dag > workglow/dag.dot
+        snakemake --configfile tests/integration.yaml --dag > dag.dot
+        diff -s dag.dot workflow/dag.dot
 
     - name: Run the workflow on toy data
       run: |
