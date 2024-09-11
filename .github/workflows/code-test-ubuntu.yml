@@ -10,7 +10,7 @@ name: Run integration test on Ubuntu
 on:
   push:
     branches: [ master ]
-    paths: ['tests/integration/**', 'workflow/**']
+    paths: ['tests/integration/**', 'workflow/**', '.github/workflows/**']
 
 jobs:
   auto_test:
