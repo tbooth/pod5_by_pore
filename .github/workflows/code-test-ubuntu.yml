@@ -15,7 +15,11 @@ on:
 jobs:
   auto_test:
 
-    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: true
+      matrix:
+        runs-on: [ubuntu-latest, macos-latest]
+
     defaults:
       run:
         shell: bash -eo pipefail -l {0} # Needed for conda
@@ -50,6 +54,7 @@ jobs:
 
     # If we generate the DAG now it should match the one in the repo,
     # except for issue https://github.com/snakemake/snakemake/issues/1709
+    # so apply a less stringent file comparison
     - name: Export the DAG as dag.dot
       run: |
         snakemake --configfile tests/integration.yaml --dag > dag.dot
