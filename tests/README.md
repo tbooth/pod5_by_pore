@@ -21,8 +21,11 @@ This directory contains some toy data files to test the whole workflow. These ar
 To make a picture of the DAG the command is:
 
 ```
-$ snakemake --configfile tests/integration.yaml --dag > workglow/dag.dot
+$ snakemake --configfile tests/integration.yaml --dag > workflow/dag.dot
 ```
+
+Due to the use of a checkpoint rule, this will only generate the full DAG once the workflow
+has actually been run.
 
 ## unit directory
 

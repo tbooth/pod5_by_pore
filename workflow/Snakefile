@@ -19,7 +19,7 @@ def list_pod5_channels(wc=None):
     assert all_pod5.p5, f"No .pod5 files seen in {INPUT_DIR}/"
 
     c_extn = "bchannels" if PORES_PER_POD > 1 else "channels"
-    return [ f"results/tmp/{p5}.pod5.{c_extn}" for p5 in all_pod5.p5 ]
+    return [ f"results/tmp/{p5}.pod5.{c_extn}" for p5 in sorted(all_pod5.p5) ]
 
 def load_channels_in_use():
     """Loads channels_in_use.json, if it's available.
