@@ -1,0 +1,52 @@
+# Upon each push, if anything under workflow or tests is changed, we would like to:
+#
+# 1) Install Snakemake via conda
+# 2) Re-generate the DAG
+# 3) Test the workflow with --use-conda
+#
+
+name: Run integration test on Ubuntu
+
+on:
+  push:
+    branches: [ master ]
+    paths: ['tests/integration/**', 'workflow/**']
+
+jobs:
+  auto_test:
+
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash -eo pipefail -l {0} # Needed for conda
+
+    steps:
+
+    - uses: actions/checkout@main
+
+    - name: Install Conda
+      uses: conda-incubator/setup-miniconda@v3
+      with:
+        miniforge-version: latest
+        use-mamba: false
+        conda-solver: libmamba
+        channels: conda-forge,bioconda
+        channel-priority: strict
+        environment-file: episodes/files/conda_env.yaml
+
+    - name: Install latest Snakemake and confirm version
+      run: |
+        conda install snakemake
+        echo ---
+        which snakemake
+        snakemake --version
+
+    - name: Export the DAG as dag.dot
+      run: |
+        snakemake --configfile tests/integration.yaml --dag > workglow/dag.dot
+
+    - name: Run the workflow on toy data
+      run: |
+        test ! -e results
+        snakemake --use-conda -j1 --configfile tests/integration.yaml
+        ls results/*.pod5
