@@ -49,7 +49,7 @@ jobs:
     - name: Run the workflow on toy data
       run: |
         test ! -e results
-        snakemake --use-conda -j1 --configfile tests/integration.yaml
+        snakemake --use-conda -c all --configfile tests/integration.yaml
         ls results/*.pod5
 
     # If we generate the DAG now it should match the one in the repo,
