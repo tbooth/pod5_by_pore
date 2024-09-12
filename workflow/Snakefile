@@ -46,15 +46,17 @@ rule get_channels_in_pod:
 rule batched_channels_in_pod:
     output: temporary("{foo}.pod5.bchannels")
     input:  "{foo}.pod5.channels"
+    params:
+        pores_per_pod = PORES_PER_POD
     run:
         with open(str(output), "x") as ofh:
             with open(str(input)) as ifh:
-                if PORES_PER_POD <= 1:
+                if params.pores_per_pod <= 1:
                     # Just write the lines to the file
                     ofh.writelines(ifh)
                 else:
                     for r, c in (line.split() for line in ifh):
-                        c_batch = pore_to_batch(c, PORES_PER_POD)
+                        c_batch = pore_to_batch(c, params.pores_per_pod)
                         # TODO - check this is actually supposed to be a tab
                         ofh.write(f"{r}\t{c_batch}\n")
 
